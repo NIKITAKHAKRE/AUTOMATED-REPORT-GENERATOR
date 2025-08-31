@@ -56,3 +56,5 @@ The benefits of automated report generation include:
 
 Conclusion:
 Automated report generation is a powerful tool that can save time and effort for users while providing insights and analysis that can inform decision-making. By developing a script that can read data from a file, analyze it, and generate a formatted PDF report, users can automate the reporting process and focus on higher-level tasks. With the right tools and libraries, automated report generation can be a valuable asset for any organization.
+
+"OUTPUT": ![Image](https://github.com/user-attachments/assets/19a6b5fc-414d-47c2-b385-26c8091ea91a)

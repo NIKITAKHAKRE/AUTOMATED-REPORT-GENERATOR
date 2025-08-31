@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Automated Report Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    #output {
+      margin-top: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Automated Report Generator</h1>
+<p>Select a CSV file to analyze and generate a PDF report:</p>
+
+<input type="file" id="fileInput" accept=".csv" />
+<button onclick="generateReport()">Generate PDF Report</button>
+
+<div id="output"></div>
+
+<script>
+  let parsedData = [];
+
+  document.getElementById('fileInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        complete: function (results) {
+          parsedData = results.data.filter(row => Object.keys(row).length > 1); // Clean empty rows
+          displayTable(parsedData);
+        }
+      });
+    }
+  });
+
+  function displayTable(data) {
+    let html = '<table><thead><tr>';
+    Object.keys(data[0]).forEach(key => {
+      html += `<th>${key}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    data.forEach(row => {
+      html += '<tr>';
+      Object.values(row).forEach(val => {
+        html += `<td>${val}</td>`;
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('output').innerHTML = html;
+  }
+
+  async function generateReport() {
+    if (parsedData.length === 0) {
+      alert("Please upload a CSV file first.");
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text("Automated Data Report", 10, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Total Records: ${parsedData.length}`, 10, 30);
+
+    
+    const numericKeys = Object.keys(parsedData[0]).filter(key =>
+      typeof parsedData[0][key] === 'number'
+    );
+
+    let y = 40;
+    if (numericKeys.length) {
+      doc.text("Data Analysis (Averages):", 10, y);
+      y += 10;
+
+      numericKeys.forEach(key => {
+        const values = parsedData.map(row => row[key]);
+        const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+        doc.text(`${key}: ${avg}`, 10, y);
+        y += 10;
+      });
+    }
+
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text("Sample Data Table", 10, 20);
+
+    const headers = Object.keys(parsedData[0]);
+    const rows = parsedData.slice(0, 10).map(row => headers.map(key => String(row[key])));
+
+    doc.autoTable({
+      head: [headers],
+      body: rows,
+      startY: 30,
+      styles: { fontSize: 10 }
+    });
+
+    doc.save("report.pdf");
+  }
+</script>
+
+<!-- Add jsPDF AutoTable Plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+</body>
+</html>
